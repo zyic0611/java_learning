@@ -99,18 +99,11 @@ innodb采用WAL write-ahead logging 日志先行技术
 
 然后把修改的物理日志 redolog 写入内存的log buffer
 
-事务提交的时候 再把log buffer里的日志 顺序io的方式 快速刷入disk里的redo log。
+事务提交的时候 再把log buffer里的日志 顺序io的方式 快速刷入disk里的redo log。(实际上中间还有一个内核存储去oscache)
 
 只要日志落盘 就算db宕机 重启后也能恢复。
 
-### 刷盘策略
-
-**（必考参数 `innodb_flush_log_at_trx_commit`）**：
-
-- `0`：事务提交时，只把日志留在 Log Buffer 里，每秒钟后台线程统一刷到 OS Cache 并落盘。（性能最高，但如果 MySQL 宕机，最多丢失 1 秒的数据）。
-- `1`（默认值）：每次事务提交，都必须把 Log Buffer 里的日志写入 OS Cache 并**立刻调用 fsync() 落盘**。（最安全，严格保证 ACID，但高并发下磁盘 I/O 压力大）。
-- `2`：每次事务提交，把日志写入操作系统的 OS Cache（Page Cache），由操作系统决定何时落盘，同时 MySQL 后台线程每秒也调用一次 fsync()。（折中方案，MySQL 挂了数据不丢，只有服务器所在操作系统宕机或断电才会丢失约 1 秒的数据）。
-
+方案，MySQL 挂了数据不丢，只有服务器所在操作系统宕机或断电才会丢失约 1 秒的数据）。
 
 
 ## 总结：
